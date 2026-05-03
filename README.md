@@ -50,8 +50,26 @@ docker compose up --build
 pnpm install                  # 依存解決
 pnpm --filter web dev         # Next.js 単体起動
 pnpm --filter api dev         # Apollo Server 単体起動
-pnpm test                     # ユニット・インテグレーション
-pnpm test:e2e                 # E2E (Playwright headless)
+pnpm test                     # ユニット
+pnpm test:e2e                 # 軽い E2E（Next dev に対するスモーク）
+
+# 完全 E2E（2 ブラウザで対戦成立まで）
+docker compose up -d --build
+pnpm --filter web exec playwright install --with-deps chromium  # 初回のみ
+pnpm --filter web run test:e2e:integration
+docker compose down -v
+```
+
+## デプロイ用 CDK（`infra/`）
+
+ECS Fargate + ALB + DynamoDB + S3 のスタックを定義。
+**デプロイは人間が実行する**。AI は synth / diff まで。
+
+```bash
+pnpm --filter infra run synth                    # CloudFormation 合成
+pnpm --filter infra run diff                     # 差分確認
+pnpm --filter infra run test                     # CDK assertion
+# pnpm --filter infra exec cdk deploy --all      # ← 人間がやる
 ```
 
 ## 動作確認

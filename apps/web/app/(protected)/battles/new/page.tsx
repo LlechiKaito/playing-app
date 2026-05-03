@@ -30,18 +30,22 @@ export default function NewBattlePage() {
       <h1 className="text-2xl font-bold mb-6 mt-2">対戦募集を作成</h1>
       <form onSubmit={onSubmit} className="bg-zinc-900 p-6 rounded-lg space-y-4">
         <div>
-          <label className="text-sm opacity-60">タイトル</label>
+          <label htmlFor="title" className="text-sm opacity-60">タイトル</label>
           <input
+            id="title"
             type="text"
             required
+            placeholder="対戦のタイトル"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2 mt-1 bg-zinc-800 rounded text-white"
           />
         </div>
         <div>
-          <label className="text-sm opacity-60">メモ（任意）</label>
+          <label htmlFor="memo" className="text-sm opacity-60">メモ（任意）</label>
           <textarea
+            id="memo"
+            placeholder="メモ"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
             rows={3}
