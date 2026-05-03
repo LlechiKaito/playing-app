@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main, release]
+  push:
+    branches: [develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm -r run typecheck
+
+      - name: unit tests
+        run: pnpm -r run test
+
+      - name: cdk synth
+        run: pnpm --filter infra run synth
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: docker compose build & up
+        run: |
+          docker compose up --build -d
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4000/health >/dev/null 2>&1; then
+              echo "api ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: smoke graphql
+        run: |
+          curl -sf http://localhost:4000/health
+          curl -sfX POST http://localhost:4000/graphql \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"{ healthCheck }"}'
+
+      - name: smoke web
+        run: curl -sf http://localhost:3000/
+
+      - if: always()
+        run: docker compose logs --tail=200
+
+      - if: always()
+        run: docker compose down -v
